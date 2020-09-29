@@ -52,7 +52,7 @@
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Theming\FluentUIContextThemeWrapper.cs" />
-    <Compile Include="View\WrapcontentViewPager.cs" />
+    <Compile Include="View\WrapContentViewPager.cs" />
     <Compile Include="Widget\BottomNavigation.cs" />
     <Compile Include="Widget\ProgressBar.cs" />
     <Compile Include="Widget\Button.cs" />
