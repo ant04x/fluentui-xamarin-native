@@ -26,7 +26,9 @@ namespace FluentUI.View
         private class SimpleProperty : Property
         { 
             public SimpleProperty(Class? type, string? name) : base(type, name) { }
-            protected SimpleProperty(IntPtr javaReference, JniHandleOwnership transfer) : base(javaReference, transfer) { }
+
+            protected SimpleProperty(IntPtr javaReference, JniHandleOwnership transfer) 
+                : base(javaReference, transfer) { }
 
             public override void Set(Java.Lang.Object? @object, Java.Lang.Object? value)
             {
@@ -38,6 +40,7 @@ namespace FluentUI.View
                 }
             }
 
+            // WARNING It does not return a integer.
             public override Java.Lang.Object? Get(Java.Lang.Object? @object)
             {
                 return ((Android.Views.View)@object).MeasuredHeight;
