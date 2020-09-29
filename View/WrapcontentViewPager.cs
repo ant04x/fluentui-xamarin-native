@@ -28,15 +28,19 @@ namespace FluentUI.View
             public SimpleProperty(Class? type, string? name) : base(type, name) { }
             protected SimpleProperty(IntPtr javaReference, JniHandleOwnership transfer) : base(javaReference, transfer) { }
 
-            public override Java.Lang.Object? Get(Java.Lang.Object? @object)
-            {
-                // Temp
-                return null;
-            }
-
             public override void Set(Java.Lang.Object? @object, Java.Lang.Object? value)
             {
-                return;
+                if (value != null)
+                {
+                    ViewGroup.LayoutParams lp = ((Android.Views.View)@object).LayoutParameters;
+                    lp.Height = (int)value;
+                    ((Android.Views.View)@object).LayoutParameters = lp;
+                }
+            }
+
+            public override Java.Lang.Object? Get(Java.Lang.Object? @object)
+            {
+                return ((Android.Views.View)@object).MeasuredHeight;
             }
         }
 
