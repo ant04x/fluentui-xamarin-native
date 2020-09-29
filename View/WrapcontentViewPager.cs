@@ -23,22 +23,23 @@ namespace FluentUI.View
         public WrapContentViewPager(Context context, IAttributeSet? attrs = null)
             : base(context, attrs) { }
 
-        private class ObjectProperty : Property
-        {
-            public ObjectProperty(Class? type, string? name) { }
-            protected ObjectProperty(IntPtr javaReference, JniHandleOwnership transfer) { }
+        private class SimpleProperty : Property
+        { 
+            public SimpleProperty(Class? type, string? name) : base(type, name) { }
+            protected SimpleProperty(IntPtr javaReference, JniHandleOwnership transfer) : base(javaReference, transfer) { }
 
             public override Java.Lang.Object? Get(Java.Lang.Object? @object)
             {
-
+                // Temp
+                return null;
             }
 
             public override void Set(Java.Lang.Object? @object, Java.Lang.Object? value)
             {
-
+                return;
             }
         }
 
-        private static readonly Property heightProperty = new ObjectProperty(Class.FromType(typeof(int)), "height");
+        private static readonly Property heightProperty = new SimpleProperty(Class.FromType(typeof(int)), "height");
     }
 }
