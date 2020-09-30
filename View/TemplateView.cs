@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Support.Annotation;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
@@ -56,5 +57,36 @@ namespace FluentUI.View
         }
 
         public override bool ShouldDelayChildPressedState() => false;
+
+        protected abstract int TemplateId
+        {
+            [LayoutRes]
+            get;
+        }
+
+        protected Android.Views.View TemplateRoot
+        {
+            get;
+            private set;
+        } = null;
+
+        private bool isTemplateValid = false;
+
+        // Is not possible return the type used that inherits from View specifically, but it can be casted.
+        protected Android.Views.View FindViewInTemplateById([IdRes] int id) => TemplateRoot?.FindViewById(id);
+
+        protected void InvalidateTemplate()
+        {
+            isTemplateValid = false;
+            RequestLayout();
+        }
+
+        protected virtual void OnTemplateLoaded() { }
+
+        protected void ReloadTemplateIfInvalid()
+        {
+            // if (!isTemplateValid)
+                // TODO ReloadTemplate();
+        }
     }
 }
