@@ -41,7 +41,6 @@ namespace FluentUI.View
                 }
             }
 
-            // WARNING It does not return a integer.
             public override Java.Lang.Object Get(Java.Lang.Object @object)
             {
                 return ((Android.Views.View)@object).MeasuredHeight;
@@ -114,6 +113,26 @@ namespace FluentUI.View
             base.OnScrollChanged(l, t, oldl, oldt);
         }
 
-
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            int hms = heightMeasureSpec;
+            if (shouldWrapContent)
+            {
+                MeasureSpecMode mode = MeasureSpec.GetMode(hms);
+                Android.Views.View cv = CurrentView;
+                if (cv != null && mode != MeasureSpecMode.Exactly)
+                {
+                    if (mode == MeasureSpecMode.Unspecified)
+                        cv.Measure(widthMeasureSpec, MeasureSpec.MakeMeasureSpec(0, MeasureSpecMode.Unspecified));
+                    else
+                    {
+                        int size = MeasureSpec.GetSize(hms);
+                        cv.Measure(widthMeasureSpec, MeasureSpec.MakeMeasureSpec(cv.MeasuredHeight, MeasureSpecMode.AtMost));
+                    }
+                    hms = MeasureSpec.MakeMeasureSpec(cv.MeasuredHeight, MeasureSpecMode.Exactly);
+                }
+            }
+            base.OnMeasure(widthMeasureSpec, hms);
+        }
     }
 }
