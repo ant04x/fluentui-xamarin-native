@@ -22,7 +22,7 @@ namespace FluentUI.Widget
         private int userIconSize = 0;
         private int defaultIconSize = 0;
 
-        public BottomNavigationView(Context context, IAttributeSet? attrs = null, int defStyleAttr = 0) 
+        public BottomNavigationView(Context context, IAttributeSet attrs = null, int defStyleAttr = 0) 
             : base(new FluentUIContextThemeWrapper(context), attrs, defStyleAttr) { }
 
         public override int LabelVisibilityMode {

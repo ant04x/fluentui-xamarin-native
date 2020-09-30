@@ -18,7 +18,7 @@ namespace FluentUI.Widget
 {
     public class ProgressBar : Android.Widget.ProgressBar
     {
-        public ProgressBar(Context context, IAttributeSet? attrs = null, int defStyleAttr = 0, int defStyleRes = 0)
+        public ProgressBar(Context context, IAttributeSet attrs = null, int defStyleAttr = 0, int defStyleRes = 0)
             : base(new FluentUIContextThemeWrapper(context), attrs, defStyleAttr, defStyleRes) { }
     }
 }

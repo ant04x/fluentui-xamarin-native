@@ -18,7 +18,7 @@ namespace FluentUI.Widget
 {
     public class Button : AppCompatButton
     {
-        public Button(Context context, IAttributeSet? attrs = null, int? defStyleAttr = null) : base(new FluentUIContextThemeWrapper(context), attrs, (int)defStyleAttr)
+        public Button(Context context, IAttributeSet attrs = null, int? defStyleAttr = null) : base(new FluentUIContextThemeWrapper(context), attrs, (int)defStyleAttr)
         {
             _ = defStyleAttr ?? Resource.Attribute.buttonStyle;
         }
