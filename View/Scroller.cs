@@ -5,6 +5,7 @@ using System.Text;
 
 using Android.App;
 using Android.Content;
+using Android.Graphics;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
@@ -77,6 +78,75 @@ namespace FluentUI.View
             SplinePosition[NBSamples] = SplineTime[NBSamples];
         }
 
+        public int StartX { get; private set; } = 0;
+
+        public int StartY { get; private set; } = 0;
+
+        public float CurrVelocity
+        {
+            get
+            {
+                if (mMode == FlingMode)
+                    return mCurrVelocity;
+                else
+                    return mVelocity - mDeceleration * TimePassed() / 2000.0f;
+            }
+        }
+
+        public int FinalX
+        {
+            get => mFinalX;
+            set
+            {
+                mFinalX = value;
+                mDeltaX = (float)(mFinalX - StartX);
+                isFinished = false;
+            }
+        }
+
+        public int FinalY
+        {
+            get => mFinalY;
+            set
+            {
+                mFinalY = value;
+                mDeltaY = (float)(mFinalY - StartY);
+                isFinished = false;
+            }
+        }
+
+        public int CurrX { get; private set; } = 0;
+
+        public int CurrY { get; private set; } = 0;
+
+        public int Duration { get; private set; } = 0;
+
+        public bool IsFinished { get; private set; } = false;
+
+        private Interpolator mInterpolator;
+        private int mMode = 0;
+
+        private int mFinalX = 0;
+        private int mFinalY = 0;
+        private int mMinX = 0;
+        private int mMaxX = 0;
+        private int mMinY = 0;
+        private int mMaxY = 0;
+
+        private long mStartTime = 0;
+
+        private float mDurationReciprocal = 0;
+        private float mDeltaX = 0;
+        private float mDeltaY = 0;
+
+        private float mVelocity = 0;
+        private float mCurrVelocity = 0;
+        private int mDinstance = 0;
+        private float mFlingFriction = ViewConfiguration.ScrollFriction;
+        private float mDeceleration = 0;
+        private float mPpi;
         
+        private float myPhisycalCoeff;
+        private bool mFlywheel = false;
     }
 }
