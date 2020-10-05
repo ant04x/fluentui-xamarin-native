@@ -5,10 +5,14 @@ using System.Text;
 
 using Android.App;
 using Android.Content;
+using Android.Content.Res;
 using Android.Graphics;
+using Android.Hardware;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
+using Android.Views.Animations;
 using Android.Widget;
 
 namespace FluentUI.View
@@ -100,7 +104,7 @@ namespace FluentUI.View
             {
                 mFinalX = value;
                 mDeltaX = (float)(mFinalX - StartX);
-                isFinished = false;
+                IsFinished = false;
             }
         }
 
@@ -111,7 +115,7 @@ namespace FluentUI.View
             {
                 mFinalY = value;
                 mDeltaY = (float)(mFinalY - StartY);
-                isFinished = false;
+                IsFinished = false;
             }
         }
 
@@ -123,7 +127,7 @@ namespace FluentUI.View
 
         public bool IsFinished { get; private set; } = false;
 
-        private Interpolator mInterpolator;
+        private Android.Animation.ITimeInterpolator mInterpolator;
         private int mMode = 0;
 
         private int mFinalX = 0;
@@ -148,5 +152,98 @@ namespace FluentUI.View
         
         private float myPhisycalCoeff;
         private bool mFlywheel = false;
+
+        public Scroller(Context context, Android.Animation.ITimeInterpolator interpolator, bool flyWheel)
+        {
+            interpolator = null;
+            flyWheel = context.ApplicationInfo.TargetSdkVersion >= BuildVersionCodes.Honeycomb;
+
+            IsFinished = true;
+            mFlywheel = flyWheel;
+
+            if (interpolator == null)
+                mInterpolator = ViscousFluidInterpolator();
+            else
+                mInterpolator = interpolator;
+
+            mPpi = context.Resources.DisplayMetrics.Density * 160.0f;
+            mDeceleration = ComputeDeceleration(ViewConfiguration.ScrollFriction);
+            myPhisycalCoeff = ComputeDeceleration(0.84f); // look and feel tuning
+        }
+
+        public void SetFriction(float friction)
+        {
+            mDeceleration = ComputeDeceleration(friction);
+            mFlingFriction = friction;
+        }
+
+        private float ComputeDeceleration(float friction) =>
+            SensorManager.GravityEarth // g (m/s^2)
+            * 39.37f // inch/meter
+            * mPpi // pixel per inch
+            * friction;
+
+        public void ForceFinished(bool finished) => IsFinished = finished;
+
+        public bool ComputeScrollOfSet()
+        {
+            if (IsFinished)
+                return false;
+
+            int timePassed = (int)(AnimationUtils.CurrentAnimationTimeMillis() - mStartTime);
+
+            if (timePassed < Duration)
+            {
+                switch (mMode)
+                {
+                    case ScrollMode:
+                        float x = mInterpolator.GetInterpolation(timePassed * mDurationReciprocal);
+                        CurrX = (int)(StartX + Math.Round(x * mDeltaX));
+                        CurrY = (int)(StartY + Math.Round(x * mDeltaY));
+                        break;
+                    case FlingMode:
+                        float t = timePassed / Duration;
+                        int index = (int)(NBSamples * t);
+                        float distanceCoef = 1f;
+                        float velocityCoef = 0f;
+
+                        if (index < NBSamples)
+                        {
+                            float t_inf = index / NBSamples;
+                            float t_sup = (index + 1) / NBSamples;
+                            float d_inf = SplinePosition[index];
+                            float d_sup = SplinePosition[index + 1];
+                            velocityCoef = (d_sup - d_inf) / (t_sup - t_inf);
+                            distanceCoef = d_inf + (t - t_inf) * velocityCoef;
+                        }
+                        mCurrVelocity = velocityCoef * mDinstance / Duration * 1000.0f;
+
+                        CurrX = (int)(StartX + Math.Round(distanceCoef * (mFinalX - StartX)));
+                        // Pin to mMinX <= mCurrX <= mMaxX
+                        CurrX = Math.Min(CurrX, mMaxX);
+                        CurrX = Math.Max(CurrX, mMinX);
+
+                        CurrY = (int)(StartY + Math.Round(distanceCoef * (mFinalY - StartY)));
+                        // Pin to mMinX <= mCurrX <= mMaxX
+                        CurrY = Math.Min(CurrY, mMaxY);
+                        CurrY = Math.Max(CurrY, mMinY);
+
+                        if (CurrX == mFinalX && CurrY == mFinalY)
+                            IsFinished = true;
+                        break;
+                }
+            }
+            else
+            {
+                CurrX = mFinalX;
+                CurrY = mFinalY;
+                IsFinished = true;
+            }
+            return true;
+        }
+
+        public int TimePassed() =>
+            (int)(AnimationUtils.CurrentAnimationTimeMillis() - mStartTime);
+
     }
 }
