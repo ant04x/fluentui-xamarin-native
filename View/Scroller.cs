@@ -242,6 +242,67 @@ namespace FluentUI.View
             return true;
         }
 
+        public void StartScroll(int startX, int startY, int dx, int dy, int duration = DefaultDuration)
+        {
+            mMode = ScrollMode;
+            IsFinished = false;
+            Duration = duration;
+            mStartTime = AnimationUtils.CurrentAnimationTimeMillis();
+            StartX = startX;
+            StartY = startY;
+            mFinalX = startX + dx;
+            mFinalY = startY + dy;
+            mDeltaX = dx;
+            mDeltaY = dy;
+            mDurationReciprocal = 1.0f / Duration;
+        }
+
+        public void Fling(int startX, int startY, int velocityX, int velocityY, int minX, int maxX, int minY, int maxY)
+        {
+            if (mFlywheel && !IsFinished)
+            {
+                float oldVel = CurrVelocity;
+                float dx = mFinalX - StartX;
+                float dy = mFinalY - StartY;
+                float hyp = (float)Math.Sqrt(dx * dx + dy * dy);
+                float ndx = dx / hyp;
+                float ndy = dy / hyp;
+                float oldVelocityX = ndx * oldVel;
+                float oldVelocityY = ndy * oldVel;
+                if (Math.Sign(velocityX) == Math.Sign(oldVelocityX) && Math.Sign(velocityY) == Math.Sign(oldVelocityY))
+                {
+                    velocityX += (int)oldVelocityX;
+                    velocityY += (int)oldVelocityY;
+                }
+            }
+            mMode = FlingMode;
+            IsFinished = false;
+            float velocity = (float)Math.Sqrt(velocityX * velocityX + velocityY * velocityY);
+
+            mVelocity = velocity;
+            Duration = GetSplineFlingDuration(velocity);
+            mStartTime = AnimationUtils.CurrentAnimationTimeMillis();
+            StartX = startX;
+            StartY = startY;
+            float coeffX = velocity == 0f ? 1.0f : velocityX / velocity;
+            float coeffY = velocity == 0f ? 1.0f : velocityY / velocity;
+            float totalDistance = GetSplineFlingDistance(velocity);
+            mDinstance = (int)(totalDistance * Math.Sign(velocity));
+
+            mMinX = minX;
+            mMaxX = maxX;
+            mMinY = minY;
+            mMaxY = maxY;
+            mFinalX = (int)(startX + Math.Round(totalDistance * coeffX));
+            // Pin to mMinX <= mFinalX <= mMaxX
+            mFinalX = Math.Min(mFinalX, mMaxX);
+            mFinalX = Math.Max(mFinalX, mMinX);
+
+            mFinalY = (int)(startY + Math.Round(totalDistance * coeffY));
+            mFinalY = Math.Min(mFinalY, mMaxY);
+            mFinalY = Math.Max(mFinalY, mMinY);
+        }
+
         public int TimePassed() =>
             (int)(AnimationUtils.CurrentAnimationTimeMillis() - mStartTime);
 
