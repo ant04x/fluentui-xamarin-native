@@ -127,7 +127,7 @@ namespace FluentUI.View
 
         public bool IsFinished { get; private set; } = false;
 
-        private Android.Animation.ITimeInterpolator mInterpolator;
+        private BaseInterpolator mInterpolator;
         private int mMode = 0;
 
         private int mFinalX = 0;
@@ -150,10 +150,10 @@ namespace FluentUI.View
         private float mDeceleration = 0;
         private float mPpi;
         
-        private float myPhisycalCoeff;
+        private float mPhisycalCoeff;
         private bool mFlywheel = false;
 
-        public Scroller(Context context, Android.Animation.ITimeInterpolator interpolator, bool flyWheel)
+        public Scroller(Context context, BaseInterpolator interpolator, bool flyWheel)
         {
             interpolator = null;
             flyWheel = context.ApplicationInfo.TargetSdkVersion >= BuildVersionCodes.Honeycomb;
@@ -162,13 +162,13 @@ namespace FluentUI.View
             mFlywheel = flyWheel;
 
             if (interpolator == null)
-                mInterpolator = ViscousFluidInterpolator();
+                mInterpolator = new ViscousFluidInterpolator();
             else
                 mInterpolator = interpolator;
 
             mPpi = context.Resources.DisplayMetrics.Density * 160.0f;
             mDeceleration = ComputeDeceleration(ViewConfiguration.ScrollFriction);
-            myPhisycalCoeff = ComputeDeceleration(0.84f); // look and feel tuning
+            mPhisycalCoeff = ComputeDeceleration(0.84f); // look and feel tuning
         }
 
         public void SetFriction(float friction)
@@ -286,7 +286,7 @@ namespace FluentUI.View
             StartY = startY;
             float coeffX = velocity == 0f ? 1.0f : velocityX / velocity;
             float coeffY = velocity == 0f ? 1.0f : velocityY / velocity;
-            float totalDistance = GetSplineFlingDistance(velocity);
+            float totalDistance = (float)GetSplineFlingDistance(velocity);
             mDinstance = (int)(totalDistance * Math.Sign(velocity));
 
             mMinX = minX;
@@ -303,8 +303,74 @@ namespace FluentUI.View
             mFinalY = Math.Max(mFinalY, mMinY);
         }
 
+        private double GetSplineDeceleration(float velocity) =>
+            Math.Log(Inflexion * Math.Abs(velocity) / (mFlingFriction * mPhisycalCoeff));
+
+        private int GetSplineFlingDuration(float velocity)
+        {
+            double l = GetSplineDeceleration(velocity);
+            double decelMinusOne = DecelerationRate - 1.0;
+            return (int)(1000.0 * Math.Exp(l / decelMinusOne));
+        }
+
+        private double GetSplineFlingDistance(float velocity)
+        {
+            double l = GetSplineDeceleration(velocity);
+            double decelMinusOne = DecelerationRate - 1.0;
+            return mFlingFriction * mPhisycalCoeff * Math.Exp(DecelerationRate / decelMinusOne * l);
+        }
+
+        public void AbortAnimation()
+        {
+            CurrX = mFinalX;
+            CurrY = mFinalY;
+            IsFinished = true;
+        }
+
+        public void ExtendDuration(int extend)
+        {
+            int passed = TimePassed();
+            Duration = passed + extend;
+            mDurationReciprocal = 1.0f / Duration;
+            IsFinished = false;
+        }
+
         public int TimePassed() =>
             (int)(AnimationUtils.CurrentAnimationTimeMillis() - mStartTime);
 
+        internal class ViscousFluidInterpolator : BaseInterpolator
+        {
+            private const float ViscousFluidScale = 8.0f;
+            private static float viscousFluidNormalize;
+            private static float viscousFluidOffset;
+
+            static ViscousFluidInterpolator()
+            {
+                // must be set to 1.0 (used in viscousFluid())
+                viscousFluidNormalize = 1.0f / ViscousFluid(1.0f);
+                // account for very small floating-point error
+                viscousFluidOffset = 1.0f - viscousFluidNormalize * ViscousFluid(1.0f);
+            }
+
+            private static float ViscousFluid(float x)
+            {
+                x *= ViscousFluidScale;
+                if (x < 1.0f)
+                    x -= 1.0f - (float)Math.Exp(-x);
+                else
+                {
+                    float start = 0.36787944117f;
+                    x = 1.0f - (float)Math.Exp(1.0f - x);
+                    x = start + x * (1.0f - start);
+                }
+                return x;
+            }
+
+            public override float GetInterpolation(float input)
+            {
+                float interpolated = viscousFluidNormalize * ViscousFluid(input);
+                return interpolated > 0 ? interpolated + viscousFluidOffset : interpolated;
+            }
+        }
     }
 }
